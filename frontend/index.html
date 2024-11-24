@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titan Chat</title>
+    <title>Chat Interface</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <style>
@@ -42,10 +42,10 @@
             font-size: 2.5rem;
         }
         .chat-container {
-            height: calc(100vh - 4rem); /* Resta la altura del header */
+            height: calc(100vh - 4rem);
         }
         .messages-container {
-            max-height: calc(100vh - 12rem); /* Ajusta este valor para controlar la altura máxima */
+            height: calc(100% - 4rem); /* Ajustado para dejar espacio para el input */
             overflow-y: auto;
         }
         /* Estilo para la barra de scroll */
@@ -62,6 +62,18 @@
         }
         .messages-container::-webkit-scrollbar-thumb:hover {
             background: #6B7280;
+        }
+        .input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #1F2937;
+            border-top: 1px solid #374151;
+        }
+        .main-chat-area {
+            position: relative;
+            height: 100%;
         }
     </style>
 </head>
@@ -101,14 +113,14 @@
         <div class="flex-1 bg-gray-900 p-6 chat-container">
             <div class="h-full flex space-x-4">
                 <!-- Main Chat Area -->
-                <div class="bg-gray-800 rounded-lg flex-1 flex flex-col">
-                    <!-- Messages Area with Fixed Height -->
-                    <div class="messages-container" id="chat-area">
+                <div class="bg-gray-800 rounded-lg flex-1 main-chat-area">
+                    <!-- Messages Area -->
+                    <div class="messages-container p-4" id="chat-area">
                         <!-- Los mensajes se agregarán aquí dinámicamente -->
                     </div>
                     
-                    <!-- Input Area -->
-                    <div class="p-4 border-t border-gray-700">
+                    <!-- Input Area (ahora fijo en la parte inferior) -->
+                    <div class="input-area p-4">
                         <div class="flex items-center">
                             <input type="text" 
                                    placeholder="Escribe un mensaje..." 
@@ -160,7 +172,7 @@
         // Función para iniciar el chat
         function startChat(nickname) {
             username = nickname;
-            userNickname.textContent = nickname; // Sin el signo + en el header
+            userNickname.textContent = nickname;
             loginScreen.classList.add('hidden');
             chatInterface.classList.remove('hidden');
 
