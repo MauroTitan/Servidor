@@ -3,52 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Chat Web</title>
-    <link rel="stylesheet" href="styles.css">
-
+    <title>Chat Interface</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <style>
+        .profile-container {
+            position: relative;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-container i.fa-user-circle {
+            font-size: 2rem;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .message-profile-pic {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .message-profile-pic i.fa-user-circle {
+            font-size: 2.5rem;
+        }
+    </style>
 </head>
-<body>
-    <div class="login-container" id="login-container">
-        <h2>Ingresa al Chat</h2>
-        <div class="input-area">
-            <input type="text" id="username-input" placeholder="Escribe tu nombre de usuario">
-            <button id="login-button">Entrar</button>
+<body class="bg-gray-900 text-white h-screen flex flex-col">
+    <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700">
+        <div class="flex items-center space-x-4">
+            <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
+                <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
+                <img id="profile-image" class="object-cover opacity-0">
+            </div>
+            <span class="font-medium">Mauro-Titan</span>
         </div>
     </div>
 
-    <div class="chat-container" id="chat-container">
-        <div class="chat-header">
-            <h2>Chat Room</h2>
-            <span id="users-count">Usuarios en línea: 0</span>
-        </div>
-        <div class="chat-main">
-            <div class="chat-content">
-                <div class="chat-messages" id="chat-messages"></div>
-                <div class="input-area">
-                    <input type="text" id="message-input" placeholder="Escribe tu mensaje...">
-                    <button id="send-button">Enviar</button>
+    <div class="flex-1 bg-gray-900 p-6 relative">
+        <div class="h-full flex space-x-4">
+            <!-- Área principal del chat -->
+            <div class="bg-gray-800 rounded-lg flex-1 h-full flex flex-col">
+                <!-- Área de mensajes -->
+                <div class="flex-1 overflow-y-auto" id="chat-area">
+                    <!-- Los mensajes se agregarán aquí dinámicamente -->
+                </div>
+                <!-- Área de entrada de mensaje -->
+                <div class="p-4">
+                    <div class="flex items-center">
+                        <input type="text" 
+                               placeholder="Escribe un mensaje..." 
+                               class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
+                               id="chat-input" />
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
+                                id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="users-sidebar">
-                <h3>Usuarios Conectados</h3>
-                <ul class="users-list" id="users-list"></ul>
+            
+            <!-- Sidebar de usuarios -->
+            <div class="bg-gray-800 p-4 rounded-lg w-64">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold">Usuarios en línea</h3>
+                </div>
+                <div class="space-y-2" id="users-list">
+                    <!-- Los usuarios conectados se agregarán aquí dinámicamente -->
+                </div>
             </div>
         </div>
     </div>
 
-    <button class="notifications-button" id="notifications-button">
-        Status
-        <span class="notifications-badge" id="notifications-badge" style="display: none">0</span>
-    </button>
+    <script>
+        const chatArea = document.getElementById('chat-area');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const profileImage = document.getElementById('profile-image');
+        const defaultProfileIcon = document.getElementById('default-profile-icon');
+        const usersList = document.getElementById('users-list');
 
-    <div class="modal-overlay" id="modal-overlay"></div>
-    <div class="notifications-modal" id="notifications-modal">
-        <div class="modal-header">
-            <h3>Menciones</h3>
-            <button class="close-modal" id="close-modal">×</button>
-        </div>
-        <div id="notifications-list"></div>
-    </div>
-    <script src="index.js"></script>
+        let lastMessageAuthor = null;
+
+        function addMessage(message, isSelf = false) {
+            const lastMessage = chatArea.lastElementChild;
+            const author = isSelf ? 'Mauro-Titan' : message.username;
+
+            if (lastMessage && lastMessageAuthor === author) {
+                const lastMessageContent = lastMessage.querySelector('.message-content');
+                const newP = document.createElement('p');
+                newP.classList.add('text-gray-300', 'mt-1');
+                newP.textContent = message.text || message;
+                lastMessageContent.appendChild(newP);
+            } else {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('hover:bg-gray-700', 'border-b', 'border-gray-700');
+                
+                messageElement.innerHTML = `
+                    <div class="p-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="message-profile-pic flex-shrink-0 mt-2 rounded-full overflow-hidden">
+                                <i class="fas fa-user-circle text-gray-400"></i>
+                            </div>
+                            <div class="message-content flex flex-col">
+                                <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${author}</span>
+                                <p class="text-gray-300">${message.text || message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatArea.appendChild(messageElement);
+            }
+
+            lastMessageAuthor = author;
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function updateUsersList(users) {
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.classList.add('flex', 'items-center', 'justify-between');
+                userElement.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span>@${user}</span>
+                    </div>
+                `;
+                usersList.appendChild(userElement);
+            });
+        }
+
+        sendButton.addEventListener('click', () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                addMessage(message, true);
+                chatInput.value = '';
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = chatInput.value.trim();
+                if (message) {
+                    addMessage(message, true);
+                    chatInput.value = '';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
