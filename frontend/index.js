@@ -31,7 +31,7 @@ function getUserColor(username) {
 
 // Función para iniciar el chat
 function startChat(username) {
-    ws = new WebSocket('https://websocket-chat-u0fd.onrender.com/');
+    ws = new WebSocket('https://websocket-chat-u0fd.onrender.com');
 
     ws.onopen = () => {
         ws.send(JSON.stringify({
