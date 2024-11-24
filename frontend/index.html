@@ -45,10 +45,9 @@
             height: calc(100vh - 4rem);
         }
         .messages-container {
-            height: calc(100% - 4rem); /* Ajustado para dejar espacio para el input */
+            height: calc(100% - 4rem);
             overflow-y: auto;
         }
-        /* Estilo para la barra de scroll */
         .messages-container::-webkit-scrollbar {
             width: 8px;
         }
@@ -75,6 +74,53 @@
             position: relative;
             height: 100%;
         }
+        
+        /* Estilos para el panel lateral */
+        .users-panel {
+            transition: transform 0.3s ease-in-out;
+            position: fixed;
+            top: 4rem;
+            right: 0;
+            bottom: 0;
+            width: 16rem;
+            z-index: 50;
+            transform: translateX(100%);
+        }
+        
+        .users-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Botón para mostrar/ocultar panel en móvil */
+        .toggle-users {
+            display: none;
+        }
+        
+        /* Overlay para cerrar el panel al tocar fuera */
+        .panel-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        
+        @media (max-width: 768px) {
+            .users-list-desktop {
+                display: none;
+            }
+            
+            .toggle-users {
+                display: block;
+            }
+            
+            .panel-overlay.open {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white h-screen">
@@ -96,7 +142,7 @@
         </div>
     </div>
 
-    <!-- Interface del Chat (inicialmente oculta) -->
+    <!-- Interface del Chat -->
     <div id="chat-interface" class="h-screen flex flex-col hidden">
         <!-- Header -->
         <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700 h-16">
@@ -107,6 +153,11 @@
                 </div>
                 <span class="font-bold text-lg" id="user-nickname"></span>
             </div>
+            <!-- Botón para mostrar usuarios en móvil -->
+            <button class="toggle-users p-2 rounded-lg hover:bg-gray-700 focus:outline-none">
+                <i class="fas fa-users"></i>
+                <span class="ml-2" id="mobile-users-count">0</span>
+            </button>
         </div>
 
         <!-- Chat Container -->
@@ -116,10 +167,10 @@
                 <div class="bg-gray-800 rounded-lg flex-1 main-chat-area">
                     <!-- Messages Area -->
                     <div class="messages-container p-4" id="chat-area">
-                        <!-- Los mensajes se agregarán aquí dinámicamente -->
+                        <!-- Los mensajes se agregarán aquí -->
                     </div>
                     
-                    <!-- Input Area (ahora fijo en la parte inferior) -->
+                    <!-- Input Area -->
                     <div class="input-area p-4">
                         <div class="flex items-center">
                             <input type="text" 
@@ -134,15 +185,29 @@
                     </div>
                 </div>
                 
-                <!-- Users List -->
-                <div class="bg-gray-800 p-4 rounded-lg w-64">
+                <!-- Users List Desktop -->
+                <div class="users-list-desktop bg-gray-800 p-4 rounded-lg w-64">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
                     </div>
                     <div class="space-y-2" id="users-list">
-                        <!-- Los usuarios conectados se agregarán aquí dinámicamente -->
+                        <!-- Los usuarios conectados se agregarán aquí -->
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral deslizable para móvil -->
+        <div class="panel-overlay"></div>
+        <div class="users-panel bg-gray-800 p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">Usuarios en línea (<span id="mobile-users-count-panel">0</span>)</h3>
+                <button class="close-panel p-2 rounded-lg hover:bg-gray-700 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-2" id="mobile-users-list">
+                <!-- Los usuarios conectados se agregarán aquí (móvil) -->
             </div>
         </div>
     </div>
@@ -150,6 +215,8 @@
     <script>
         let username = '';
         let ws;
+        let touchStartX = null;
+        let touchEndX = null;
 
         // Elementos del DOM
         const loginScreen = document.getElementById('login-screen');
@@ -161,22 +228,68 @@
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-button');
         const usersList = document.getElementById('users-list');
+        const mobileUsersList = document.getElementById('mobile-users-list');
         const usersCount = document.getElementById('users-count');
+        const mobileUsersCount = document.getElementById('mobile-users-count');
+        const mobileUsersCountPanel = document.getElementById('mobile-users-count-panel');
+        const usersPanel = document.querySelector('.users-panel');
+        const panelOverlay = document.querySelector('.panel-overlay');
+        const toggleUsersBtn = document.querySelector('.toggle-users');
+        const closePanel = document.querySelector('.close-panel');
 
         let lastMessageAuthor = null;
+
+        // Funciones para el panel móvil
+        function openPanel() {
+            usersPanel.classList.add('open');
+            panelOverlay.classList.add('open');
+        }
+
+        function closePanel() {
+            usersPanel.classList.remove('open');
+            panelOverlay.classList.remove('open');
+        }
+
+        // Event listeners para el panel móvil
+        toggleUsersBtn.addEventListener('click', openPanel);
+        closePanel.addEventListener('click', closePanel);
+        panelOverlay.addEventListener('click', closePanel);
+
+        // Manejo de gestos táctiles
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!touchStartX) return;
+            touchEndX = e.touches[0].clientX;
+            const diff = touchStartX - touchEndX;
+
+            // Si el deslizamiento es desde el borde derecho hacia la izquierda
+            if (touchStartX > window.innerWidth - 30 && diff > 50) {
+                openPanel();
+            }
+            // Si el deslizamiento es desde la izquierda hacia la derecha cuando el panel está abierto
+            else if (usersPanel.classList.contains('open') && diff < -50) {
+                closePanel();
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            touchStartX = null;
+            touchEndX = null;
+        });
 
         function formatUsername(name) {
             return `+${name}`;
         }
 
-        // Función para iniciar el chat
         function startChat(nickname) {
             username = nickname;
             userNickname.textContent = nickname;
             loginScreen.classList.add('hidden');
             chatInterface.classList.remove('hidden');
 
-            // Conectar WebSocket
             ws = new WebSocket('https://websocket-chat-u0fd.onrender.com');
 
             ws.onopen = () => {
@@ -233,19 +346,29 @@
         }
 
         function updateUsersList(users) {
-            usersList.innerHTML = '';
+            // Actualizar ambas listas (desktop y móvil)
+            const updateList = (listElement) => {
+                listElement.innerHTML = '';
+                users.forEach(user => {
+                    const userElement = document.createElement('div');
+                    userElement.classList.add('flex', 'items-center', 'justify-between');
+                    userElement.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                            <span>${formatUsername(user)}</span>
+                        </div>
+                    `;
+                    listElement.appendChild(userElement);
+                });
+            };
+
+            updateList(usersList);
+            updateList(mobileUsersList);
+            
+            // Actualizar contadores
             usersCount.textContent = users.length;
-            users.forEach(user => {
-                const userElement = document.createElement('div');
-                userElement.classList.add('flex', 'items-center', 'justify-between');
-                userElement.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        <span>${formatUsername(user)}</span>
-                    </div>
-                `;
-                usersList.appendChild(userElement);
-            });
+            mobileUsersCount.textContent = users.length;
+            mobileUsersCountPanel.textContent = users.length;
         }
 
         function sendMessage() {
@@ -260,8 +383,8 @@
             }
         }
 
-        // Event Listeners
-        loginButton.addEventListener('click', () => {
+// Event Listeners
+loginButton.addEventListener('click', () => {
             const nickname = nicknameInput.value.trim();
             if (nickname) {
                 startChat(nickname);
@@ -283,6 +406,52 @@
             if (e.key === 'Enter') {
                 sendMessage();
             }
+        });
+
+        // Event listeners para gestos táctiles en dispositivos móviles
+        let startX;
+        const threshold = 100; // Distancia mínima para considerar un swipe
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!startX) return;
+
+            const currentX = e.touches[0].clientX;
+            const diff = startX - currentX;
+
+            // Prevenir el scroll mientras se hace swipe
+            if (Math.abs(diff) > 10) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (!startX) return;
+
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+
+            // Swipe izquierda para abrir (desde el borde derecho)
+            if (startX > window.innerWidth - 30 && diff > threshold) {
+                openPanel();
+            }
+            // Swipe derecha para cerrar (cuando el panel está abierto)
+            else if (usersPanel.classList.contains('open') && diff < -threshold) {
+                closePanel();
+            }
+
+            startX = null;
+        });
+
+        // Cerrar el panel al tocar fuera de él
+        panelOverlay.addEventListener('click', closePanel);
+
+        // Prevenir que los clics dentro del panel lo cierren
+        usersPanel.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     </script>
 </body>
