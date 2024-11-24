@@ -31,7 +31,7 @@ function getUserColor(username) {
 
 // Función para iniciar el chat
 function startChat(username) {
-    ws = new WebSocket('ws://websocketchat-two.vercel.app/');
+    ws = new WebSocket('ws://websocketchat-two.vercel.app:8080/');
 
     ws.onopen = () => {
         ws.send(JSON.stringify({
