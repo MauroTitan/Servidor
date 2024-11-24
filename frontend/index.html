@@ -96,7 +96,7 @@
                 
                 <div class="bg-gray-800 p-4 rounded-lg w-64">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold">Usuarios en línea</h3>
+                        <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
                     </div>
                     <div class="space-y-2" id="users-list">
                         <!-- Los usuarios conectados se agregarán aquí dinámicamente -->
@@ -120,13 +120,18 @@
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-button');
         const usersList = document.getElementById('users-list');
+        const usersCount = document.getElementById('users-count');
 
         let lastMessageAuthor = null;
+
+        function formatUsername(name) {
+            return `+${name}`;
+        }
 
         // Función para iniciar el chat
         function startChat(nickname) {
             username = nickname;
-            userNickname.textContent = nickname;
+            userNickname.textContent = formatUsername(nickname);
             loginScreen.classList.add('hidden');
             chatInterface.classList.remove('hidden');
 
@@ -172,7 +177,7 @@
                                 <i class="fas fa-user-circle text-gray-400"></i>
                             </div>
                             <div class="message-content flex flex-col">
-                                <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${author}</span>
+                                <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${formatUsername(author)}</span>
                                 <p class="text-gray-300">${message.text || message}</p>
                             </div>
                         </div>
@@ -188,13 +193,14 @@
 
         function updateUsersList(users) {
             usersList.innerHTML = '';
+            usersCount.textContent = users.length;
             users.forEach(user => {
                 const userElement = document.createElement('div');
                 userElement.classList.add('flex', 'items-center', 'justify-between');
                 userElement.innerHTML = `
                     <div class="flex items-center">
                         <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        <span>@${user}</span>
+                        <span>${formatUsername(user)}</span>
                     </div>
                 `;
                 usersList.appendChild(userElement);
