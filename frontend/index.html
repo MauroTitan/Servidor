@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Interface</title>
+    <title>Titan Chat</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <style>
@@ -41,6 +41,28 @@
         .message-profile-pic i.fa-user-circle {
             font-size: 2.5rem;
         }
+        .chat-container {
+            height: calc(100vh - 4rem); /* Resta la altura del header */
+        }
+        .messages-container {
+            max-height: calc(100vh - 12rem); /* Ajusta este valor para controlar la altura máxima */
+            overflow-y: auto;
+        }
+        /* Estilo para la barra de scroll */
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .messages-container::-webkit-scrollbar-track {
+            background: #374151;
+            border-radius: 4px;
+        }
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 4px;
+        }
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white h-screen">
@@ -64,7 +86,8 @@
 
     <!-- Interface del Chat (inicialmente oculta) -->
     <div id="chat-interface" class="h-screen flex flex-col hidden">
-        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700">
+        <!-- Header -->
+        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700 h-16">
             <div class="flex items-center space-x-4">
                 <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
                     <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
@@ -74,13 +97,18 @@
             </div>
         </div>
 
-        <div class="flex-1 bg-gray-900 p-6 relative">
+        <!-- Chat Container -->
+        <div class="flex-1 bg-gray-900 p-6 chat-container">
             <div class="h-full flex space-x-4">
-                <div class="bg-gray-800 rounded-lg flex-1 h-full flex flex-col">
-                    <div class="flex-1 overflow-y-auto" id="chat-area">
+                <!-- Main Chat Area -->
+                <div class="bg-gray-800 rounded-lg flex-1 flex flex-col">
+                    <!-- Messages Area with Fixed Height -->
+                    <div class="messages-container" id="chat-area">
                         <!-- Los mensajes se agregarán aquí dinámicamente -->
                     </div>
-                    <div class="p-4">
+                    
+                    <!-- Input Area -->
+                    <div class="p-4 border-t border-gray-700">
                         <div class="flex items-center">
                             <input type="text" 
                                    placeholder="Escribe un mensaje..." 
@@ -94,6 +122,7 @@
                     </div>
                 </div>
                 
+                <!-- Users List -->
                 <div class="bg-gray-800 p-4 rounded-lg w-64">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
