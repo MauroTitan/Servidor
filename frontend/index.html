@@ -43,65 +43,117 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white h-screen flex flex-col">
-    <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700">
-        <div class="flex items-center space-x-4">
-            <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
-                <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
-                <img id="profile-image" class="object-cover opacity-0">
+<body class="bg-gray-900 text-white h-screen">
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="h-screen flex items-center justify-center">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center">Ingresa al Chat</h2>
+            <div class="space-y-4">
+                <input type="text" 
+                       id="nickname-input"
+                       placeholder="Ingresa tu nickname" 
+                       class="w-full bg-gray-700 border-none rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                       maxLength="20">
+                <button id="login-button"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4">
+                    Entrar al Chat
+                </button>
             </div>
-            <span class="font-medium">Mauro-Titan</span>
         </div>
     </div>
 
-    <div class="flex-1 bg-gray-900 p-6 relative">
-        <div class="h-full flex space-x-4">
-            <!-- Área principal del chat -->
-            <div class="bg-gray-800 rounded-lg flex-1 h-full flex flex-col">
-                <!-- Área de mensajes -->
-                <div class="flex-1 overflow-y-auto" id="chat-area">
-                    <!-- Los mensajes se agregarán aquí dinámicamente -->
+    <!-- Interface del Chat (inicialmente oculta) -->
+    <div id="chat-interface" class="h-screen flex flex-col hidden">
+        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700">
+            <div class="flex items-center space-x-4">
+                <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
+                    <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
+                    <img id="profile-image" class="object-cover opacity-0">
                 </div>
-                <!-- Área de entrada de mensaje -->
-                <div class="p-4">
-                    <div class="flex items-center">
-                        <input type="text" 
-                               placeholder="Escribe un mensaje..." 
-                               class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
-                               id="chat-input" />
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
-                                id="send-button">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                <span class="font-medium" id="user-nickname"></span>
+            </div>
+        </div>
+
+        <div class="flex-1 bg-gray-900 p-6 relative">
+            <div class="h-full flex space-x-4">
+                <div class="bg-gray-800 rounded-lg flex-1 h-full flex flex-col">
+                    <div class="flex-1 overflow-y-auto" id="chat-area">
+                        <!-- Los mensajes se agregarán aquí dinámicamente -->
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center">
+                            <input type="text" 
+                                   placeholder="Escribe un mensaje..." 
+                                   class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
+                                   id="chat-input" />
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
+                                    id="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Sidebar de usuarios -->
-            <div class="bg-gray-800 p-4 rounded-lg w-64">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold">Usuarios en línea</h3>
-                </div>
-                <div class="space-y-2" id="users-list">
-                    <!-- Los usuarios conectados se agregarán aquí dinámicamente -->
+                
+                <div class="bg-gray-800 p-4 rounded-lg w-64">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Usuarios en línea</h3>
+                    </div>
+                    <div class="space-y-2" id="users-list">
+                        <!-- Los usuarios conectados se agregarán aquí dinámicamente -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        let username = '';
+        let ws;
+
+        // Elementos del DOM
+        const loginScreen = document.getElementById('login-screen');
+        const chatInterface = document.getElementById('chat-interface');
+        const nicknameInput = document.getElementById('nickname-input');
+        const loginButton = document.getElementById('login-button');
+        const userNickname = document.getElementById('user-nickname');
         const chatArea = document.getElementById('chat-area');
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-button');
-        const profileImage = document.getElementById('profile-image');
-        const defaultProfileIcon = document.getElementById('default-profile-icon');
         const usersList = document.getElementById('users-list');
 
         let lastMessageAuthor = null;
 
+        // Función para iniciar el chat
+        function startChat(nickname) {
+            username = nickname;
+            userNickname.textContent = nickname;
+            loginScreen.classList.add('hidden');
+            chatInterface.classList.remove('hidden');
+
+            // Conectar WebSocket
+            ws = new WebSocket('https://websocket-chat-u0fd.onrender.com');
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    type: 'login',
+                    username: nickname
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'userList') {
+                    updateUsersList(data.users);
+                } else if (data.type === 'message') {
+                    addMessage(data);
+                }
+            };
+        }
+
         function addMessage(message, isSelf = false) {
             const lastMessage = chatArea.lastElementChild;
-            const author = isSelf ? 'Mauro-Titan' : message.username;
+            const author = isSelf ? username : message.username;
 
             if (lastMessage && lastMessageAuthor === author) {
                 const lastMessageContent = lastMessage.querySelector('.message-content');
@@ -149,21 +201,40 @@
             });
         }
 
-        sendButton.addEventListener('click', () => {
+        function sendMessage() {
             const message = chatInput.value.trim();
-            if (message) {
-                addMessage(message, true);
+            if (message && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'message',
+                    text: message
+                }));
+                addMessage({ username, text: message }, true);
                 chatInput.value = '';
+            }
+        }
+
+        // Event Listeners
+        loginButton.addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                startChat(nickname);
             }
         });
 
+        nicknameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const nickname = nicknameInput.value.trim();
+                if (nickname) {
+                    startChat(nickname);
+                }
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const message = chatInput.value.trim();
-                if (message) {
-                    addMessage(message, true);
-                    chatInput.value = '';
-                }
+                sendMessage();
             }
         });
     </script>
