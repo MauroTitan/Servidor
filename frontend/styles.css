@@ -8,6 +8,9 @@
 
 body {
     overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
 
 /* Contenedor de perfil y foto */
@@ -52,8 +55,16 @@ body {
 }
 
 /* Área de chat */
+#main-chat,
 #chat-area {
+    position: relative;
+    height: 100%;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+#chat-area {
+    padding-bottom: 100px; /* Add extra padding at bottom for input */
 }
 
 #chat-area::-webkit-scrollbar {
@@ -71,6 +82,7 @@ body {
 
 /* Panel de usuarios */
 #users-panel {
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -114,4 +126,17 @@ body.panel-open {
     #users-panel {
         top: 0;
     }
+}
+
+/* Fixes for mobile scrolling */
+#chat-interface {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#main-chat,
+#chat-area {
+    overscroll-behavior-y: contain;
 }
