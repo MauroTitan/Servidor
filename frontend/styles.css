@@ -72,11 +72,15 @@ body {
 /* Panel de usuarios */
 #users-panel {
     -webkit-overflow-scrolling: touch;
-    z-index: 40;
 }
 
 #users-panel.show {
     transform: translateX(0);
+}
+
+/* Área principal del chat cuando el panel de usuarios está abierto */
+#main-chat.shifted {
+    transform: translateX(-75%);
 }
 
 /* Media queries */
@@ -87,6 +91,10 @@ body {
         transform: none;
     }
     
+    #main-chat.shifted {
+        transform: none;
+    }
+    
     #toggle-users {
         display: none;
     }
@@ -94,6 +102,11 @@ body {
     .chat-container {
         display: flex;
     }
+}
+
+/* Prevenir el scroll del body cuando el panel está abierto */
+body.panel-open {
+    overflow: hidden;
 }
 
 /* Ajustes para evitar problemas con el teclado virtual en móviles */
