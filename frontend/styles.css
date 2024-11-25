@@ -85,12 +85,16 @@
     #users-panel {
         width: 170px;
         max-width: 170px;
-        height: 567px;
-        position: absolute;
-        top: 0;
+        height: calc(100% - 64px); /* 64px es la altura del header (h-16 en Tailwind) */
+        position: fixed;
+        top: 64px; /* Altura del header */
         right: 0;
+        bottom: 0;
+        background-color: #1F2937; /* Mismo color de fondo que en tu HTML */
         transform: translateX(100%);
         transition: transform 0.3s ease;
+        overflow-y: auto;
+        z-index: 40; /* Asegura que esté sobre otros elementos */
     }
 
     #main-chat.shifted {
