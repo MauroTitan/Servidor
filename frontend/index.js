@@ -29,32 +29,32 @@ function formatUsername(name) {
 
 // Manejadores de gestos táctiles
 function handleTouchStart(event) {
+    if (window.innerWidth >= 768) return;
     touchStartX = event.touches[0].clientX;
 }
 
 function handleTouchMove(event) {
+    if (window.innerWidth >= 768) return;
     if (!touchStartX) return;
     
     touchEndX = event.touches[0].clientX;
     const diffX = touchStartX - touchEndX;
     
-    // Prevenir scroll horizontal solo si es un swipe horizontal significativo
     if (Math.abs(diffX) > 10) {
         event.preventDefault();
     }
 }
 
 function handleTouchEnd() {
+    if (window.innerWidth >= 768) return;
     if (!touchStartX || !touchEndX) return;
     
     const diffX = touchStartX - touchEndX;
     
     if (Math.abs(diffX) > SWIPE_THRESHOLD) {
         if (diffX > 0 && !isPanelOpen) {
-            // Swipe izquierda - abrir panel
             openUsersPanel();
         } else if (diffX < 0 && isPanelOpen) {
-            // Swipe derecha - cerrar panel
             closeUsersPanel();
         }
     }
@@ -65,15 +65,15 @@ function handleTouchEnd() {
 
 // Funciones para manejar el panel de usuarios
 function openUsersPanel() {
+    if (window.innerWidth >= 768) return;
     usersPanel.classList.add('show');
-    mainChat.classList.add('shifted');
     isPanelOpen = true;
     document.body.classList.add('panel-open');
 }
 
 function closeUsersPanel() {
+    if (window.innerWidth >= 768) return;
     usersPanel.classList.remove('show');
-    mainChat.classList.remove('shifted');
     isPanelOpen = false;
     document.body.classList.remove('panel-open');
 }
@@ -219,17 +219,6 @@ mainChat.addEventListener('click', (e) => {
     }
 });
 
-// Manejar cambios de orientación y redimensionamiento
-window.addEventListener('resize', () => {
-    if (window.innerWidth >= 768) {
-        // En desktop, resetear estado del panel
-        usersPanel.classList.remove('show');
-        mainChat.classList.remove('shifted');
-        isPanelOpen = false;
-        document.body.classList.remove('panel-open');
-    }
-});
-
 // Manejar el foco del input y el teclado virtual
 chatInput.addEventListener('focus', () => {
     if (window.innerWidth < 768) {
@@ -248,4 +237,11 @@ window.addEventListener('resize', () => {
         chatArea.scrollTop = chatArea.scrollHeight;
     }
     windowHeight = window.innerHeight;
+});
+
+// Manejar reconexión del WebSocket
+window.addEventListener('online', () => {
+    if (username && (!ws || ws.readyState === WebSocket.CLOSED)) {
+        startChat(username);
+    }
 });
