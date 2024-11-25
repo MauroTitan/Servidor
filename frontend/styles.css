@@ -1,3 +1,16 @@
+/* Estilos Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    overflow: hidden;
+}
+
+/* Contenedor de perfil y foto */
 .profile-container {
     position: relative;
     width: 2rem;
@@ -25,6 +38,7 @@
     justify-content: center;
 }
 
+/* Mensajes */
 .message-profile-pic {
     width: 2.5rem;
     height: 2.5rem;
@@ -37,54 +51,67 @@
     font-size: 2.5rem;
 }
 
-.chat-container {
-    height: calc(100vh - 4rem);
+/* Área de chat */
+#chat-area {
+    -webkit-overflow-scrolling: touch;
 }
 
-.messages-container {
-    height: calc(100% - 4rem);
-    overflow-y: auto;
+#chat-area::-webkit-scrollbar {
+    width: 6px;
 }
 
-.messages-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.messages-container::-webkit-scrollbar-track {
+#chat-area::-webkit-scrollbar-track {
     background: #374151;
-    border-radius: 4px;
 }
 
-.messages-container::-webkit-scrollbar-thumb {
+#chat-area::-webkit-scrollbar-thumb {
     background: #4B5563;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
-.messages-container::-webkit-scrollbar-thumb:hover {
-    background: #6B7280;
+/* Panel de usuarios */
+#users-panel {
+    -webkit-overflow-scrolling: touch;
 }
 
-.input-area {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #1F2937;
-    border-top: 1px solid #374151;
+#users-panel.show {
+    transform: translateX(0);
 }
 
-.main-chat-area {
-    position: relative;
-    height: 100%;
+/* Área principal del chat cuando el panel de usuarios está abierto */
+#main-chat.shifted {
+    transform: translateX(-75%);
 }
 
-/* Estilos para el panel de usuarios en móvil */
-@media (max-width: 1024px) {
-    .users-panel-visible {
-        transform: translateX(0) !important;
+/* Media queries */
+@media (min-width: 768px) {
+    #users-panel {
+        position: static;
+        width: 250px;
+        transform: none;
     }
     
+    #main-chat.shifted {
+        transform: none;
+    }
+    
+    #toggle-users {
+        display: none;
+    }
+    
+    .chat-container {
+        display: flex;
+    }
+}
+
+/* Prevenir el scroll del body cuando el panel está abierto */
+body.panel-open {
+    overflow: hidden;
+}
+
+/* Ajustes para evitar problemas con el teclado virtual en móviles */
+@media screen and (max-height: 450px) {
     #users-panel {
-        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+        top: 0;
     }
 }
