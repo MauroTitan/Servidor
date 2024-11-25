@@ -64,7 +64,13 @@ body {
 }
 
 #chat-area {
-    padding-bottom: 100px; /* Add extra padding at bottom for input */
+    padding-bottom: 80px; /* Reduced from 100px to match input height more closely */
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-area > div:last-child {
+    margin-bottom: 0;
 }
 
 #chat-area::-webkit-scrollbar {
