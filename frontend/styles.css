@@ -80,7 +80,24 @@
     border-radius: 3px;
  }
  
- /* Panel de usuarios */
+ /* Panel de usuarios - Versión Móvil */
+ @media screen and (max-width: 767px) {
+    #users-panel {
+        width: 170px;
+        max-width: 170px;
+        height: 567px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+
+    #main-chat.shifted {
+        transform: translateX(-170px);
+    }
+ }
+ 
  #users-panel {
     -webkit-overflow-scrolling: touch;
  }
@@ -89,27 +106,22 @@
     transform: translateX(0);
  }
  
- /* Área principal del chat cuando el panel de usuarios está abierto */
- #main-chat.shifted {
-    transform: translateX(-55%);
- }
- 
- /* Media queries */
+ /* Para escritorio */
  @media (min-width: 768px) {
     #users-panel {
         position: static;
         width: 250px;
         transform: none;
     }
-    
+   
     #main-chat.shifted {
         transform: none;
     }
-    
+   
     #toggle-users {
         display: none;
     }
-    
+   
     .chat-container {
         display: flex;
     }
