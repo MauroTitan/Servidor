@@ -17,6 +17,7 @@ const usersList = document.getElementById('users-list');
 const usersCount = document.getElementById('users-count');
 const toggleUsersBtn = document.getElementById('toggle-users');
 const usersPanel = document.getElementById('users-panel');
+const mainChat = document.getElementById('main-chat');
 
 let lastMessageAuthor = null;
 let isPanelOpen = false;

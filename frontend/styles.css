@@ -71,31 +71,28 @@ body {
 
 /* Panel de usuarios */
 #users-panel {
-    width: 250px;
-    border-left: 1px solid #374151;
+    -webkit-overflow-scrolling: touch;
+    z-index: 40;
 }
 
-@media (max-width: 767px) {
-    #users-panel {
-        position: fixed;
-        top: 64px; /* altura del header */
-        right: 0;
-        bottom: 0;
-        width: 75%;
-        transform: translateX(100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 40;
-    }
-
-    #users-panel.show {
-        transform: translateX(0);
-    }
+#users-panel.show {
+    transform: translateX(0);
 }
 
 /* Media queries */
-@media (max-width: 767px) {
+@media (min-width: 768px) {
     #users-panel {
-        border-left: none;
+        position: static;
+        width: 250px;
+        transform: none;
+    }
+    
+    #toggle-users {
+        display: none;
+    }
+    
+    .chat-container {
+        display: flex;
     }
 }
 
