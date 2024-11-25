@@ -4,28 +4,125 @@
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-}
-
-body, html {
+ }
+ 
+ body, html {
     height: 100%;
     overflow: hidden;
-    overscroll-behavior: none;
-}
-
-#chat-interface {
+ }
+ 
+ #chat-interface {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+ }
+ 
+ #chat-area {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+ }
+ 
+ /* Contenedor de perfil y foto */
+ .profile-container {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ }
+ 
+ .profile-container img {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;
-}
-
-#main-chat,
-#chat-area {
-    position: relative;
+    object-fit: cover;
+ }
+ 
+ .profile-container i.fa-user-circle {
+    font-size: 2rem;
+    width: 100%;
     height: 100%;
-    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ }
+ 
+ /* Mensajes */
+ .message-profile-pic {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ }
+ 
+ .message-profile-pic i.fa-user-circle {
+    font-size: 2.5rem;
+ }
+ 
+ /* Área de chat */
+ #chat-area::-webkit-scrollbar {
+    width: 6px;
+ }
+ 
+ #chat-area::-webkit-scrollbar-track {
+    background: #374151;
+ }
+ 
+ #chat-area::-webkit-scrollbar-thumb {
+    background: #4B5563;
+    border-radius: 3px;
+ }
+ 
+ /* Panel de usuarios */
+ #users-panel {
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-}
+ }
+ 
+ #users-panel.show {
+    transform: translateX(0);
+ }
+ 
+ /* Área principal del chat cuando el panel de usuarios está abierto */
+ #main-chat.shifted {
+    transform: translateX(-75%);
+ }
+ 
+ /* Media queries */
+ @media (min-width: 768px) {
+    #users-panel {
+        position: static;
+        width: 250px;
+        transform: none;
+    }
+    
+    #main-chat.shifted {
+        transform: none;
+    }
+    
+    #toggle-users {
+        display: none;
+    }
+    
+    .chat-container {
+        display: flex;
+    }
+ }
+ 
+ /* Prevenir el scroll del body cuando el panel está abierto */
+ body.panel-open {
+    overflow: hidden;
+ }
+ 
+ /* Ajustes para evitar problemas con el teclado virtual en móviles */
+ @media screen and (max-height: 450px) {
+    #users-panel {
+        top: 0;
+    }
+ }
