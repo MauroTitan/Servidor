@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chat Interface</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-900 text-white h-screen">
+<body class="bg-gray-900 text-white">
     <!-- Pantalla de Login -->
     <div id="login-screen" class="h-screen flex items-center justify-center">
         <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-96 max-w-[90%]">
@@ -28,50 +28,52 @@
     </div>
 
     <!-- Interface del Chat -->
-    <div id="chat-interface" class="h-screen flex flex-col hidden">
-        <!-- Header -->
-        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700 h-16">
-            <div class="flex items-center space-x-4">
-                <button id="toggle-users" class="lg:hidden p-2">
-                    <i class="fas fa-users"></i>
-                </button>
-                <div class="flex items-center">
-                    <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
-                        <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
-                        <img id="profile-image" class="object-cover opacity-0">
+    <div id="chat-interface" class="hidden flex flex-col h-screen">
+        <!-- Header Fijo -->
+        <header class="fixed top-0 left-0 right-0 bg-gray-800 border-b border-gray-700 z-20">
+            <div class="flex items-center justify-between p-2 h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="toggle-users" class="lg:hidden p-2">
+                        <i class="fas fa-users"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
+                            <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
+                            <img id="profile-image" class="object-cover opacity-0">
+                        </div>
+                        <span class="font-bold text-lg ml-2" id="user-nickname"></span>
                     </div>
-                    <span class="font-bold text-lg ml-2" id="user-nickname"></span>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <!-- Chat Container -->
-        <div class="flex-1 bg-gray-900 chat-container">
-            <div class="h-full flex relative">
-                <!-- Main Chat Area -->
-                <div class="bg-gray-800 rounded-lg flex-1 main-chat-area">
-                    <!-- Messages Area -->
-                    <div class="messages-container p-4" id="chat-area">
-                        <!-- Los mensajes se agregarán aquí dinámicamente -->
-                    </div>
-                    
-                    <!-- Input Area -->
-                    <div class="input-area p-4">
-                        <div class="flex items-center">
-                            <input type="text" 
-                                   placeholder="Escribe un mensaje..." 
-                                   class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
-                                   id="chat-input" />
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
-                                    id="send-button">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
+        <!-- Contenedor Principal (debajo del header) -->
+        <main class="flex-1 pt-16 flex relative">
+            <!-- Área del Chat -->
+            <div class="flex-1 bg-gray-800 flex flex-col h-full">
+                <!-- Mensajes -->
+                <div class="flex-1 overflow-y-auto messages-container" id="chat-area">
+                    <!-- Los mensajes se agregarán aquí -->
+                </div>
+
+                <!-- Input fijo en la parte inferior -->
+                <div class="input-area bg-gray-800 border-t border-gray-700 p-4">
+                    <div class="flex items-center">
+                        <input type="text" 
+                               id="chat-input"
+                               placeholder="Escribe un mensaje..." 
+                               class="flex-1 bg-gray-700 border-none rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <button id="send-button" 
+                                class="ml-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
-                
-                <!-- Users List (Panel lateral) -->
-                <div id="users-panel" class="bg-gray-800 p-4 rounded-lg w-64 lg:relative lg:translate-x-0 fixed right-0 top-16 bottom-0 transform translate-x-full transition-transform duration-300 ease-in-out z-10">
+            </div>
+
+            <!-- Panel de Usuarios (se desliza desde la derecha) -->
+            <div id="users-panel" class="users-panel">
+                <div class="p-4">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
                         <button id="close-users" class="lg:hidden">
@@ -79,11 +81,11 @@
                         </button>
                     </div>
                     <div class="space-y-2" id="users-list">
-                        <!-- Los usuarios conectados se agregarán aquí -->
+                        <!-- Lista de usuarios -->
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="index.js"></script>

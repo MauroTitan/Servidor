@@ -1,7 +1,10 @@
+// Variables globales
 let username = '';
 let ws;
 let touchStartX = 0;
 let touchEndX = 0;
+let isKeyboardVisible = false;
+let lastMessageAuthor = null;
 
 // Elementos del DOM
 const loginScreen = document.getElementById('login-screen');
@@ -18,10 +21,28 @@ const usersPanel = document.getElementById('users-panel');
 const toggleUsersBtn = document.getElementById('toggle-users');
 const closeUsersBtn = document.getElementById('close-users');
 
-let lastMessageAuthor = null;
+// Detector de teclado virtual
+function handleKeyboard() {
+    const visualViewport = window.visualViewport;
+    
+    visualViewport.addEventListener('resize', () => {
+        isKeyboardVisible = visualViewport.height < window.innerHeight;
+        document.body.classList.toggle('keyboard-visible', isKeyboardVisible);
+        
+        if (isKeyboardVisible) {
+            hideUsersPanel();
+        }
+        
+        // Asegurar que el área de mensajes se desplace al fondo cuando aparece el teclado
+        chatArea.scrollTop = chatArea.scrollHeight;
+    });
+}
 
-// Funciones para el panel de usuarios móvil
+// Funciones para el panel de usuarios
 function toggleUsersPanel() {
+    if (isKeyboardVisible) {
+        chatInput.blur(); // Ocultar teclado antes de mostrar el panel
+    }
     usersPanel.classList.toggle('users-panel-visible');
 }
 
@@ -40,140 +61,169 @@ function handleTouchMove(e) {
 
 function handleTouchEnd() {
     const swipeDistance = touchEndX - touchStartX;
-    const threshold = 100; // Distancia mínima para considerar un swipe
+    const threshold = 100;
 
     if (Math.abs(swipeDistance) >= threshold) {
-        if (swipeDistance > 0) { // Swipe derecha
+        if (swipeDistance > 0 && usersPanel.classList.contains('users-panel-visible')) {
             hideUsersPanel();
-        } else { // Swipe izquierda
+        } else if (swipeDistance < 0 && !usersPanel.classList.contains('users-panel-visible')) {
             toggleUsersPanel();
         }
     }
 }
 
-function formatUsername(name) {
-    return `+${name}`;
-}
-
-function startChat(nickname) {
-    username = nickname;
-    userNickname.textContent = nickname;
-    loginScreen.classList.add('hidden');
-    chatInterface.classList.remove('hidden');
-
-    ws = new WebSocket('https://websocket-chat-u0fd.onrender.com');
+// Función para conectar al WebSocket
+function connectWebSocket() {
+    ws = new WebSocket('ws://tu-servidor-websocket:puerto');
 
     ws.onopen = () => {
+        console.log('Conectado al servidor');
+        // Enviar mensaje de login
         ws.send(JSON.stringify({
             type: 'login',
-            username: nickname
+            username: username
         }));
     };
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
-        if (data.type === 'userList') {
-            updateUsersList(data.users);
-        } else if (data.type === 'message') {
-            addMessage(data);
-        }
+        handleWebSocketMessage(data);
+    };
+
+    ws.onclose = () => {
+        console.log('Desconectado del servidor');
+        // Intenta reconectar después de 5 segundos
+        setTimeout(connectWebSocket, 5000);
+    };
+
+    ws.onerror = (error) => {
+        console.error('Error de WebSocket:', error);
     };
 }
 
-function addMessage(message, isSelf = false) {
-    const lastMessage = chatArea.lastElementChild;
-    const author = isSelf ? username : message.username;
+// Manejar mensajes recibidos del WebSocket
+function handleWebSocketMessage(data) {
+    switch (data.type) {
+        case 'chat':
+            addMessage(data.username, data.message);
+            break;
+        case 'users':
+            updateUsersList(data.users);
+            break;
+        case 'system':
+            addSystemMessage(data.message);
+            break;
+    }
+}
 
-    if (lastMessage && lastMessageAuthor === author) {
-        const lastMessageContent = lastMessage.querySelector('.message-content');
-        const newP = document.createElement('p');
-        newP.classList.add('text-gray-300', 'mt-1');
-        newP.textContent = message.text || message;
-        lastMessageContent.appendChild(newP);
-    } else {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('hover:bg-gray-700', 'border-b', 'border-gray-700');
-        
-        messageElement.innerHTML = `
-            <div class="p-4">
-                <div class="flex items-start space-x-3">
-                    <div class="message-profile-pic flex-shrink-0 mt-2 rounded-full overflow-hidden">
-                        <i class="fas fa-user-circle text-gray-400"></i>
-                    </div>
-                    <div class="message-content flex flex-col">
-                        <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${formatUsername(author)}</span>
-                        <p class="text-gray-300">${message.text || message}</p>
-                    </div>
-                </div>
-            </div>
-        `;
+// Función para añadir mensajes al chat
+function addMessage(author, message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('mb-4');
 
-        chatArea.appendChild(messageElement);
+    const showAuthor = lastMessageAuthor !== author;
+    lastMessageAuthor = author;
+
+    if (showAuthor) {
+        const authorSpan = document.createElement('div');
+        authorSpan.classList.add('text-sm', 'text-gray-400', 'mb-1');
+        authorSpan.textContent = author;
+        messageDiv.appendChild(authorSpan);
     }
 
-    lastMessageAuthor = author;
+    const messageContent = document.createElement('div');
+    messageContent.classList.add('bg-gray-700', 'rounded-lg', 'p-3', 'inline-block');
+    messageContent.textContent = message;
+    messageDiv.appendChild(messageContent);
+
+    chatArea.appendChild(messageDiv);
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
+// Función para añadir mensajes del sistema
+function addSystemMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('text-center', 'text-gray-400', 'text-sm', 'my-2');
+    messageDiv.textContent = message;
+    chatArea.appendChild(messageDiv);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// Actualizar lista de usuarios
 function updateUsersList(users) {
     usersList.innerHTML = '';
     usersCount.textContent = users.length;
+
     users.forEach(user => {
-        const userElement = document.createElement('div');
-        userElement.classList.add('flex', 'items-center', 'justify-between');
-        userElement.innerHTML = `
-            <div class="flex items-center">
-                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span>${formatUsername(user)}</span>
-            </div>
-        `;
-        usersList.appendChild(userElement);
+        const userDiv = document.createElement('div');
+        userDiv.classList.add('flex', 'items-center', 'space-x-2', 'p-2', 'rounded-lg', 'hover:bg-gray-700');
+        
+        const profilePic = document.createElement('div');
+        profilePic.classList.add('profile-container', 'rounded-full', 'overflow-hidden', 'bg-gray-700');
+        profilePic.innerHTML = '<i class="fas fa-user-circle text-gray-400"></i>';
+        
+        const userName = document.createElement('span');
+        userName.textContent = user;
+        
+        userDiv.appendChild(profilePic);
+        userDiv.appendChild(userName);
+        usersList.appendChild(userDiv);
     });
 }
 
+// Función para enviar mensaje
 function sendMessage() {
     const message = chatInput.value.trim();
-    if (message && ws && ws.readyState === WebSocket.OPEN) {
+    if (message && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
-            type: 'message',
-            text: message
+            type: 'chat',
+            message: message
         }));
-        addMessage({ username, text: message }, true);
         chatInput.value = '';
     }
 }
 
 // Event Listeners
 loginButton.addEventListener('click', () => {
-    const nickname = nicknameInput.value.trim();
-    if (nickname) {
-        startChat(nickname);
+    username = nicknameInput.value.trim();
+    if (username) {
+        loginScreen.classList.add('hidden');
+        chatInterface.classList.remove('hidden');
+        userNickname.textContent = username;
+        connectWebSocket();
     }
 });
 
 nicknameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        const nickname = nicknameInput.value.trim();
-        if (nickname) {
-            startChat(nickname);
-        }
+        loginButton.click();
     }
 });
 
 sendButton.addEventListener('click', sendMessage);
 
 chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
         sendMessage();
     }
 });
 
-// Event listeners para el panel de usuarios móvil
 toggleUsersBtn.addEventListener('click', toggleUsersPanel);
 closeUsersBtn.addEventListener('click', hideUsersPanel);
 
-// Event listeners para gestos táctiles
-document.addEventListener('touchstart', handleTouchStart);
-document.addEventListener('touchmove', handleTouchMove);
+chatInput.addEventListener('focus', () => {
+    hideUsersPanel();
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+    }, 100);
+});
+
+// Inicializar detectores de eventos táctiles
+document.addEventListener('touchstart', handleTouchStart, { passive: true });
+document.addEventListener('touchmove', handleTouchMove, { passive: true });
 document.addEventListener('touchend', handleTouchEnd);
+
+// Inicializar detector de teclado
+handleKeyboard();
