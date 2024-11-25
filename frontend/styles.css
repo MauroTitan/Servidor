@@ -91,7 +91,7 @@
  
  /* Área principal del chat cuando el panel de usuarios está abierto */
  #main-chat.shifted {
-    transform: translateX(-75%);
+    transform: translateX(-55%);
  }
  
  /* Media queries */
