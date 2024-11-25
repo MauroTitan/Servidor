@@ -17,7 +17,6 @@ const usersList = document.getElementById('users-list');
 const usersCount = document.getElementById('users-count');
 const toggleUsersBtn = document.getElementById('toggle-users');
 const usersPanel = document.getElementById('users-panel');
-const mainChat = document.getElementById('main-chat');
 
 let lastMessageAuthor = null;
 let isPanelOpen = false;
@@ -34,14 +33,7 @@ function handleTouchStart(event) {
 
 function handleTouchMove(event) {
     if (!touchStartX) return;
-    
     touchEndX = event.touches[0].clientX;
-    const diffX = touchStartX - touchEndX;
-    
-    // Prevenir scroll horizontal solo si es un swipe horizontal significativo
-    if (Math.abs(diffX) > 10) {
-        event.preventDefault();
-    }
 }
 
 function handleTouchEnd() {
@@ -66,16 +58,12 @@ function handleTouchEnd() {
 // Funciones para manejar el panel de usuarios
 function openUsersPanel() {
     usersPanel.classList.add('show');
-    mainChat.classList.add('shifted');
     isPanelOpen = true;
-    document.body.classList.add('panel-open');
 }
 
 function closeUsersPanel() {
     usersPanel.classList.remove('show');
-    mainChat.classList.remove('shifted');
     isPanelOpen = false;
-    document.body.classList.remove('panel-open');
 }
 
 function toggleUsersPanel() {
@@ -208,44 +196,64 @@ chatInput.addEventListener('keypress', (e) => {
 toggleUsersBtn.addEventListener('click', toggleUsersPanel);
 
 // Eventos táctiles para el swipe
-document.addEventListener('touchstart', handleTouchStart, { passive: false });
-document.addEventListener('touchmove', handleTouchMove, { passive: false });
-document.addEventListener('touchend', handleTouchEnd, { passive: false });
+document.addEventListener('touchstart', handleTouchStart);
+document.addEventListener('touchmove', handleTouchMove);
+document.addEventListener('touchend', handleTouchEnd);
 
 // Cerrar panel al hacer clic en el chat principal en móvil
-mainChat.addEventListener('click', (e) => {
+chatArea.addEventListener('click', (e) => {
     if (window.innerWidth < 768 && isPanelOpen) {
         closeUsersPanel();
     }
 });
 
-// Manejar cambios de orientación y redimensionamiento
-window.addEventListener('resize', () => {
-    if (window.innerWidth >= 768) {
-        // En desktop, resetear estado del panel
-        usersPanel.classList.remove('show');
-        mainChat.classList.remove('shifted');
-        isPanelOpen = false;
-        document.body.classList.remove('panel-open');
-    }
-});
+// Manejar el foco del input y scroll automático
+let isKeyboardVisible = false;
 
-// Manejar el foco del input y el teclado virtual
+// Cuando el input recibe el foco (el teclado se abrirá)
 chatInput.addEventListener('focus', () => {
     if (window.innerWidth < 768) {
-        // Dar tiempo al teclado virtual para aparecer
+        isKeyboardVisible = true;
         setTimeout(() => {
             chatArea.scrollTop = chatArea.scrollHeight;
         }, 300);
     }
 });
 
-// Detectar cuando se oculta el teclado virtual
-let windowHeight = window.innerHeight;
+// Cuando el input pierde el foco (el teclado podría cerrarse)
+chatInput.addEventListener('blur', () => {
+    if (window.innerWidth < 768) {
+        isKeyboardVisible = false;
+    }
+});
+
+// Detectar cambios de altura de ventana para el teclado virtual
+const originalWindowHeight = window.innerHeight;
 window.addEventListener('resize', () => {
-    if (window.innerHeight < windowHeight) {
-        // Teclado visible
+    // Solo proceder si estamos en un dispositivo móvil
+    if (window.innerWidth < 768) {
+        const currentWindowHeight = window.innerHeight;
+        
+        // Si la altura actual es menor que la original, el teclado probablemente está visible
+        if (currentWindowHeight < originalWindowHeight) {
+            isKeyboardVisible = true;
+            setTimeout(() => {
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }, 100);
+        } else {
+            isKeyboardVisible = false;
+        }
+    }
+});
+
+// Asegurarse de que los mensajes nuevos sean visibles
+const observer = new MutationObserver((mutations) => {
+    if (isKeyboardVisible) {
         chatArea.scrollTop = chatArea.scrollHeight;
     }
-    windowHeight = window.innerHeight;
+});
+
+observer.observe(chatArea, {
+    childList: true,
+    subtree: true
 });

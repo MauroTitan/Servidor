@@ -71,42 +71,32 @@ body {
 
 /* Panel de usuarios */
 #users-panel {
-    -webkit-overflow-scrolling: touch;
+    width: 250px;
+    border-left: 1px solid #374151;
 }
 
-#users-panel.show {
-    transform: translateX(0);
-}
+@media (max-width: 767px) {
+    #users-panel {
+        position: fixed;
+        top: 64px; /* altura del header */
+        right: 0;
+        bottom: 0;
+        width: 75%;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 40;
+    }
 
-/* Área principal del chat cuando el panel de usuarios está abierto */
-#main-chat.shifted {
-    transform: translateX(-75%);
+    #users-panel.show {
+        transform: translateX(0);
+    }
 }
 
 /* Media queries */
-@media (min-width: 768px) {
+@media (max-width: 767px) {
     #users-panel {
-        position: static;
-        width: 250px;
-        transform: none;
+        border-left: none;
     }
-    
-    #main-chat.shifted {
-        transform: none;
-    }
-    
-    #toggle-users {
-        display: none;
-    }
-    
-    .chat-container {
-        display: flex;
-    }
-}
-
-/* Prevenir el scroll del body cuando el panel está abierto */
-body.panel-open {
-    overflow: hidden;
 }
 
 /* Ajustes para evitar problemas con el teclado virtual en móviles */
