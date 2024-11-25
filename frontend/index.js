@@ -1,47 +1,73 @@
 let username = '';
 let ws;
-let userColors = new Map();
-let notifications = [];
-let unreadNotifications = 0;
+let touchStartX = 0;
+let touchEndX = 0;
 
 // Elementos del DOM
-const loginContainer = document.getElementById('login-container');
-const chatContainer = document.getElementById('chat-container');
-const usernameInput = document.getElementById('username-input');
+const loginScreen = document.getElementById('login-screen');
+const chatInterface = document.getElementById('chat-interface');
+const nicknameInput = document.getElementById('nickname-input');
 const loginButton = document.getElementById('login-button');
-const messageInput = document.getElementById('message-input');
+const userNickname = document.getElementById('user-nickname');
+const chatArea = document.getElementById('chat-area');
+const chatInput = document.getElementById('chat-input');
 const sendButton = document.getElementById('send-button');
-const chatMessages = document.getElementById('chat-messages');
-const usersCount = document.getElementById('users-count');
 const usersList = document.getElementById('users-list');
+const usersCount = document.getElementById('users-count');
+const usersPanel = document.getElementById('users-panel');
+const toggleUsersBtn = document.getElementById('toggle-users');
+const closeUsersBtn = document.getElementById('close-users');
 
-// Función para generar un color aleatorio para usuarios
-function generateUserColor() {
-    const hue = Math.random() * 360;
-    return `hsl(${hue}, 70%, 40%)`;
+let lastMessageAuthor = null;
+
+// Funciones para el panel de usuarios móvil
+function toggleUsersPanel() {
+    usersPanel.classList.toggle('users-panel-visible');
 }
 
-// Función para obtener o generar el color de un usuario
-function getUserColor(username) {
-    if (!userColors.has(username)) {
-        userColors.set(username, generateUserColor());
+function hideUsersPanel() {
+    usersPanel.classList.remove('users-panel-visible');
+}
+
+// Manejadores de eventos táctiles
+function handleTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchMove(e) {
+    touchEndX = e.touches[0].clientX;
+}
+
+function handleTouchEnd() {
+    const swipeDistance = touchEndX - touchStartX;
+    const threshold = 100; // Distancia mínima para considerar un swipe
+
+    if (Math.abs(swipeDistance) >= threshold) {
+        if (swipeDistance > 0) { // Swipe derecha
+            hideUsersPanel();
+        } else { // Swipe izquierda
+            toggleUsersPanel();
+        }
     }
-    return userColors.get(username);
 }
 
-// Función para iniciar el chat
-function startChat(username) {
+function formatUsername(name) {
+    return `+${name}`;
+}
+
+function startChat(nickname) {
+    username = nickname;
+    userNickname.textContent = nickname;
+    loginScreen.classList.add('hidden');
+    chatInterface.classList.remove('hidden');
+
     ws = new WebSocket('https://websocket-chat-u0fd.onrender.com');
 
     ws.onopen = () => {
         ws.send(JSON.stringify({
             type: 'login',
-            username: username
+            username: nickname
         }));
-        
-        addSystemMessage('Conectado al chat');
-        loginContainer.style.display = 'none';
-        chatContainer.style.display = 'flex';
     };
 
     ws.onmessage = (event) => {
@@ -49,168 +75,105 @@ function startChat(username) {
         
         if (data.type === 'userList') {
             updateUsersList(data.users);
-            usersCount.textContent = `Usuarios en línea: ${data.count}`;
         } else if (data.type === 'message') {
-            const currentUsers = Array.from(usersList.children).map(li => li.textContent);
-            addMessage(data.username, data.text, currentUsers);
+            addMessage(data);
         }
-    };
-
-    ws.onclose = () => {
-        addSystemMessage('Desconectado del chat');
-        loginContainer.style.display = 'block';
-        chatContainer.style.display = 'none';
     };
 }
 
-// Función para procesar menciones en el texto
-function processMentions(text, users) {
-    const words = text.split(' ');
-    return words.map(word => {
-        if (word.startsWith('@')) {
-            const username = word.slice(1);
-            if (users.includes(username)) {
-                return `<span class="mention" style="color: ${getUserColor(username)}">@${username}</span>`;
-            }
-        }
-        return word;
-    }).join(' ');
+function addMessage(message, isSelf = false) {
+    const lastMessage = chatArea.lastElementChild;
+    const author = isSelf ? username : message.username;
+
+    if (lastMessage && lastMessageAuthor === author) {
+        const lastMessageContent = lastMessage.querySelector('.message-content');
+        const newP = document.createElement('p');
+        newP.classList.add('text-gray-300', 'mt-1');
+        newP.textContent = message.text || message;
+        lastMessageContent.appendChild(newP);
+    } else {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('hover:bg-gray-700', 'border-b', 'border-gray-700');
+        
+        messageElement.innerHTML = `
+            <div class="p-4">
+                <div class="flex items-start space-x-3">
+                    <div class="message-profile-pic flex-shrink-0 mt-2 rounded-full overflow-hidden">
+                        <i class="fas fa-user-circle text-gray-400"></i>
+                    </div>
+                    <div class="message-content flex flex-col">
+                        <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${formatUsername(author)}</span>
+                        <p class="text-gray-300">${message.text || message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        chatArea.appendChild(messageElement);
+    }
+
+    lastMessageAuthor = author;
+    chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// Función para actualizar la lista de usuarios
 function updateUsersList(users) {
     usersList.innerHTML = '';
+    usersCount.textContent = users.length;
     users.forEach(user => {
-        const li = document.createElement('li');
-        li.textContent = user;
-        usersList.appendChild(li);
-    });
-}
-
-// Función para agregar mensajes al chat
-function addMessage(username, text, users = []) {
-    const now = new Date();
-    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
-    const processedText = processMentions(text, users);
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message';
-    messageDiv.innerHTML = `
-        <span class="timestamp">[${time}]</span>
-        <span class="username" style="color: ${getUserColor(username)}">${username}:</span>
-        <span>${processedText}</span>
-    `;
-    
-    if (text.includes(`@${username}`) && username !== window.username) {
-        addNotification(username, text, time);
-    }
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function addSystemMessage(text) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message system-message';
-    messageDiv.textContent = text;
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Funciones para el sistema de notificaciones
-function addNotification(fromUser, text, time) {
-    notifications.push({ fromUser, text, time, read: false });
-    unreadNotifications++;
-    updateNotificationsBadge();
-}
-
-function updateNotificationsBadge() {
-    const badge = document.getElementById('notifications-badge');
-    if (unreadNotifications > 0) {
-        badge.style.display = 'block';
-        badge.textContent = unreadNotifications;
-    } else {
-        badge.style.display = 'none';
-    }
-}
-
-function showNotifications() {
-    const notificationsList = document.getElementById('notifications-list');
-    notificationsList.innerHTML = '';
-    
-    if (notifications.length === 0) {
-        notificationsList.innerHTML = '<p>No hay menciones nuevas</p>';
-        return;
-    }
-
-    notifications.forEach((notification) => {
-        const notificationDiv = document.createElement('div');
-        notificationDiv.className = 'notification-item';
-        notificationDiv.innerHTML = `
-            <span class="timestamp">[${notification.time}]</span>
-            <span class="username" style="color: ${getUserColor(notification.fromUser)}">${notification.fromUser}</span>
-            <span>te mencionó: ${notification.text}</span>
+        const userElement = document.createElement('div');
+        userElement.classList.add('flex', 'items-center', 'justify-between');
+        userElement.innerHTML = `
+            <div class="flex items-center">
+                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                <span>${formatUsername(user)}</span>
+            </div>
         `;
-        notificationsList.appendChild(notificationDiv);
+        usersList.appendChild(userElement);
     });
-
-    notifications.forEach(n => n.read = true);
-    unreadNotifications = 0;
-    updateNotificationsBadge();
 }
 
 function sendMessage() {
-    const text = messageInput.value.trim();
-    if (text && ws && ws.readyState === WebSocket.OPEN) {
-        const currentUsers = Array.from(usersList.children).map(li => li.textContent);
+    const message = chatInput.value.trim();
+    if (message && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
             type: 'message',
-            text: text
+            text: message
         }));
-        addMessage(username, text, currentUsers);
-        messageInput.value = '';
+        addMessage({ username, text: message }, true);
+        chatInput.value = '';
     }
 }
 
 // Event Listeners
 loginButton.addEventListener('click', () => {
-    username = usernameInput.value.trim();
-    if (username) {
-        startChat(username);
+    const nickname = nicknameInput.value.trim();
+    if (nickname) {
+        startChat(nickname);
     }
 });
 
-usernameInput.addEventListener('keypress', (e) => {
+nicknameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        username = usernameInput.value.trim();
-        if (username) {
-            startChat(username);
+        const nickname = nicknameInput.value.trim();
+        if (nickname) {
+            startChat(nickname);
         }
     }
 });
 
 sendButton.addEventListener('click', sendMessage);
 
-messageInput.addEventListener('keypress', (e) => {
+chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         sendMessage();
     }
 });
 
-// Event listeners para notificaciones
-document.getElementById('notifications-button').addEventListener('click', () => {
-    document.getElementById('notifications-modal').style.display = 'block';
-    document.getElementById('modal-overlay').style.display = 'block';
-    showNotifications();
-});
+// Event listeners para el panel de usuarios móvil
+toggleUsersBtn.addEventListener('click', toggleUsersPanel);
+closeUsersBtn.addEventListener('click', hideUsersPanel);
 
-document.getElementById('close-modal').addEventListener('click', () => {
-    document.getElementById('notifications-modal').style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
-});
-
-document.getElementById('modal-overlay').addEventListener('click', () => {
-    document.getElementById('notifications-modal').style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'none';
-});
+// Event listeners para gestos táctiles
+document.addEventListener('touchstart', handleTouchStart);
+document.addEventListener('touchmove', handleTouchMove);
+document.addEventListener('touchend', handleTouchEnd);
