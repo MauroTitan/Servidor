@@ -34,14 +34,7 @@ function handleTouchStart(event) {
 
 function handleTouchMove(event) {
     if (!touchStartX) return;
-    
     touchEndX = event.touches[0].clientX;
-    const diffX = touchStartX - touchEndX;
-    
-    // Prevenir scroll horizontal solo si es un swipe horizontal significativo
-    if (Math.abs(diffX) > 10) {
-        event.preventDefault();
-    }
 }
 
 function handleTouchEnd() {
@@ -66,16 +59,12 @@ function handleTouchEnd() {
 // Funciones para manejar el panel de usuarios
 function openUsersPanel() {
     usersPanel.classList.add('show');
-    mainChat.classList.add('shifted');
     isPanelOpen = true;
-    document.body.classList.add('panel-open');
 }
 
 function closeUsersPanel() {
     usersPanel.classList.remove('show');
-    mainChat.classList.remove('shifted');
     isPanelOpen = false;
-    document.body.classList.remove('panel-open');
 }
 
 function toggleUsersPanel() {
