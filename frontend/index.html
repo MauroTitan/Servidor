@@ -45,10 +45,9 @@
             height: calc(100vh - 4rem);
         }
         .messages-container {
-            height: calc(100% - 4rem); /* Ajustado para dejar espacio para el input */
+            height: calc(100% - 4rem);
             overflow-y: auto;
         }
-        /* Estilo para la barra de scroll */
         .messages-container::-webkit-scrollbar {
             width: 8px;
         }
@@ -63,17 +62,59 @@
         .messages-container::-webkit-scrollbar-thumb:hover {
             background: #6B7280;
         }
+
+        /* Estilos responsive */
+        @media (max-width: 768px) {
+            .chat-container {
+                flex-direction: column;
+            }
+            .users-list-desktop {
+                display: none;
+            }
+            .users-list-mobile {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .users-list-mobile {
+                display: none;
+            }
+            .users-list-desktop {
+                display: block;
+            }
+        }
+
         .input-area {
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             background-color: #1F2937;
             border-top: 1px solid #374151;
+            z-index: 50;
         }
+
         .main-chat-area {
             position: relative;
             height: 100%;
+        }
+
+        /* Estilos para panel de usuarios en móvil */
+        .users-panel-mobile {
+            position: fixed;
+            top: 4rem;
+            bottom: 0;
+            right: 0;
+            width: 75%;
+            background-color: #1F2937;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 40;
+        }
+
+        .users-panel-mobile.active {
+            transform: translateX(0);
         }
     </style>
 </head>
@@ -96,10 +137,10 @@
         </div>
     </div>
 
-    <!-- Interface del Chat (inicialmente oculta) -->
+    <!-- Interface del Chat -->
     <div id="chat-interface" class="h-screen flex flex-col hidden">
         <!-- Header -->
-        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700 h-16">
+        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700 h-16 fixed top-0 left-0 right-0 z-50">
             <div class="flex items-center space-x-4">
                 <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
                     <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
@@ -107,40 +148,49 @@
                 </div>
                 <span class="font-bold text-lg" id="user-nickname"></span>
             </div>
+            <button id="toggle-users-mobile" class="md:hidden p-2">
+                <i class="fas fa-users"></i>
+            </button>
         </div>
 
         <!-- Chat Container -->
-        <div class="flex-1 bg-gray-900 p-6 chat-container">
-            <div class="h-full flex space-x-4">
-                <!-- Main Chat Area -->
-                <div class="bg-gray-800 rounded-lg flex-1 main-chat-area">
-                    <!-- Messages Area -->
-                    <div class="messages-container p-4" id="chat-area">
-                        <!-- Los mensajes se agregarán aquí dinámicamente -->
-                    </div>
-                    
-                    <!-- Input Area (ahora fijo en la parte inferior) -->
-                    <div class="input-area p-4">
-                        <div class="flex items-center">
-                            <input type="text" 
-                                   placeholder="Escribe un mensaje..." 
-                                   class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
-                                   id="chat-input" />
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
-                                    id="send-button">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
+        <div class="flex-1 bg-gray-900 p-6 chat-container flex pt-16">
+            <!-- Main Chat Area -->
+            <div class="bg-gray-800 rounded-lg flex-1 main-chat-area mr-4 md:mr-0">
+                <div class="messages-container p-4 h-full" id="chat-area">
+                    <!-- Los mensajes se agregarán aquí dinámicamente -->
                 </div>
                 
-                <!-- Users List -->
-                <div class="bg-gray-800 p-4 rounded-lg w-64">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
+                <div class="input-area p-4">
+                    <div class="flex items-center">
+                        <input type="text" 
+                               placeholder="Escribe un mensaje..." 
+                               class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
+                               id="chat-input" />
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
+                                id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
-                    <div class="space-y-2" id="users-list">
-                        <!-- Los usuarios conectados se agregarán aquí dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Usuarios en escritorio -->
+            <div class="bg-gray-800 p-4 rounded-lg w-64 users-list-desktop">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
+                </div>
+                <div class="space-y-2" id="users-list-desktop">
+                    <!-- Los usuarios conectados se agregarán aquí -->
+                </div>
+            </div>
+
+            <!-- Panel de usuarios en móvil -->
+            <div class="users-panel-mobile" id="users-panel-mobile">
+                <div class="p-4">
+                    <h3 class="text-lg font-bold mb-4">Usuarios en línea (<span id="users-count-mobile">0</span>)</h3>
+                    <div id="users-list-mobile" class="space-y-2">
+                        <!-- Usuarios para móvil -->
                     </div>
                 </div>
             </div>
@@ -160,8 +210,12 @@
         const chatArea = document.getElementById('chat-area');
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-button');
-        const usersList = document.getElementById('users-list');
+        const usersListDesktop = document.getElementById('users-list-desktop');
+        const usersListMobile = document.getElementById('users-list-mobile');
         const usersCount = document.getElementById('users-count');
+        const usersCountMobile = document.getElementById('users-count-mobile');
+        const toggleUsersMobile = document.getElementById('toggle-users-mobile');
+        const usersPanelMobile = document.getElementById('users-panel-mobile');
 
         let lastMessageAuthor = null;
 
@@ -169,7 +223,6 @@
             return `+${name}`;
         }
 
-        // Función para iniciar el chat
         function startChat(nickname) {
             username = nickname;
             userNickname.textContent = nickname;
@@ -195,6 +248,11 @@
                     addMessage(data);
                 }
             };
+
+            // Evento para toggle de usuarios en móvil
+            toggleUsersMobile.addEventListener('click', () => {
+                usersPanelMobile.classList.toggle('active');
+            });
         }
 
         function addMessage(message, isSelf = false) {
@@ -233,7 +291,8 @@
         }
 
         function updateUsersList(users) {
-            usersList.innerHTML = '';
+            // Actualizar lista de usuarios en escritorio
+            usersListDesktop.innerHTML = '';
             usersCount.textContent = users.length;
             users.forEach(user => {
                 const userElement = document.createElement('div');
@@ -244,7 +303,22 @@
                         <span>${formatUsername(user)}</span>
                     </div>
                 `;
-                usersList.appendChild(userElement);
+                usersListDesktop.appendChild(userElement);
+            });
+
+            // Actualizar lista de usuarios en móvil
+            usersListMobile.innerHTML = '';
+            usersCountMobile.textContent = users.length;
+            users.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.classList.add('flex', 'items-center', 'justify-between');
+                userElement.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span>${formatUsername(user)}</span>
+                    </div>
+                `;
+                usersListMobile.appendChild(userElement);
             });
         }
 
