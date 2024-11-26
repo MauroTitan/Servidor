@@ -10,6 +10,20 @@ body, html {
    overflow: hidden;
 }
 
+#chat-interface {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+}
+
+#chat-area {
+   height: 100%;
+   overflow-y: auto;
+   -webkit-overflow-scrolling: touch;
+}
+
 .profile-container {
    position: relative;
    width: 2rem;
@@ -49,91 +63,63 @@ body, html {
    font-size: 2.5rem;
 }
 
-.chat-container {
-   height: calc(100vh - 4rem);
+#chat-area::-webkit-scrollbar {
+   width: 6px;
 }
 
-.messages-container {
-   height: calc(100% - 4rem);
-   overflow-y: auto;
-}
-
-.messages-container::-webkit-scrollbar {
-   width: 8px;
-}
-
-.messages-container::-webkit-scrollbar-track {
+#chat-area::-webkit-scrollbar-track {
    background: #374151;
-   border-radius: 4px;
 }
 
-.messages-container::-webkit-scrollbar-thumb {
+#chat-area::-webkit-scrollbar-thumb {
    background: #4B5563;
-   border-radius: 4px;
+   border-radius: 3px;
 }
 
-.messages-container::-webkit-scrollbar-thumb:hover {
-   background: #6B7280;
-}
-
-.input-area {
-   position: absolute;
-   bottom: 0;
-   left: 0;
-   right: 0;
-   background-color: #1F2937;
-   border-top: 1px solid #374151;
-}
-
-.main-chat-area {
-   position: relative;
-   height: 100%;
-}
-
-/* Estilos para dispositivos móviles */
+/* Panel de usuarios - Versión Móvil */
 @media screen and (max-width: 767px) {
-   .users-sidebar {
-       display: none; /* Ocultar en móvil */
+   #users-list {
+       width: 170px;
+       max-width: 170px;
+       height: calc(100% - 64px - 72px);
+       position: fixed;
+       top: 64px;
+       right: 0;
+       background-color: #1F2937; 
+       transform: translateX(100%);
+       transition: transform 0.3s ease;
+       overflow-y: auto;
+       z-index: 40;
+   }
+   
+   #chat-interface.shifted #users-list {
+       transform: translateX(0);
+   }
+   
+   #chat-interface.shifted .main-chat-area {
+       transform: translateX(-170px);
    }
 }
 
-/* Estilos para PC */
+#users-list {
+   -webkit-overflow-scrolling: touch;
+}
+
+/* Para escritorio */
 @media (min-width: 768px) {
-   .users-sidebar {
-       width: 170px; 
-       background-color: #1F2937; 
-       border-left: 1px solid #374151;
-       overflow-y: auto;
-       max-height: calc(100% - 4rem);
+   #users-list {
+       position: static;
+       width: 250px;
+       transform: none;
    }
+}
 
-   .users-sidebar h3 {
-       color: white;
-       padding: 0.5rem;
-       font-weight: bold;
-       display: flex;
-       justify-content: space-between;
-       align-items: center;
-   }
+body.panel-open {
+   overflow: hidden;
+}
 
-   .users-list {
-       list-style: none;
-       padding: 0;
-   }
-
-   .users-list div {
-       padding: 0.5rem;
-       color: white;
-       display: flex;
-       align-items: center;
-       border-bottom: 1px solid #374151;
-   }
-
-   .users-list div .w-2 {
-       margin-right: 0.5rem;
-   }
-
-   .chat-container {
-       display: flex !important;
+@media screen and (max-height: 450px) {
+   #users-list {
+       top: 0;
    }
 }
