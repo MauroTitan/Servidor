@@ -1,3 +1,4 @@
+/* Estilos Base */
 * {
    margin: 0;
    padding: 0;
@@ -24,6 +25,7 @@ body, html {
    -webkit-overflow-scrolling: touch;
 }
 
+/* Contenedor de perfil y foto */
 .profile-container {
    position: relative;
    width: 2rem;
@@ -51,6 +53,7 @@ body, html {
    justify-content: center;
 }
 
+/* Mensajes */
 .message-profile-pic {
    width: 2.5rem;
    height: 2.5rem;
@@ -63,6 +66,7 @@ body, html {
    font-size: 2.5rem;
 }
 
+/* Área de chat */
 #chat-area::-webkit-scrollbar {
    width: 6px;
 }
@@ -78,12 +82,12 @@ body, html {
 
 /* Panel de usuarios - Versión Móvil */
 @media screen and (max-width: 767px) {
-   #users-list {
+   #users-panel {
        width: 170px;
        max-width: 170px;
-       height: calc(100% - 64px - 72px);
+       height: calc(100% - 64px - 72px); /* 64px del header, 72px de la barra de mensaje */
        position: fixed;
-       top: 64px;
+       top: 64px; /* Altura del header */
        right: 0;
        background-color: #1F2937; 
        transform: translateX(100%);
@@ -91,35 +95,49 @@ body, html {
        overflow-y: auto;
        z-index: 40;
    }
-   
-   #chat-interface.shifted #users-list {
-       transform: translateX(0);
-   }
-   
-   #chat-interface.shifted .main-chat-area {
+
+   #main-chat.shifted {
        transform: translateX(-170px);
    }
 }
 
-#users-list {
+#users-panel {
    -webkit-overflow-scrolling: touch;
+}
+
+#users-panel.show {
+   transform: translateX(0);
 }
 
 /* Para escritorio */
 @media (min-width: 768px) {
-   #users-list {
+   #users-panel {
        position: static;
        width: 250px;
        transform: none;
    }
+  
+   #main-chat.shifted {
+       transform: none;
+   }
+  
+   #toggle-users {
+       display: none;
+   }
+  
+   .chat-container {
+       display: flex;
+   }
 }
 
+/* Prevenir el scroll del body cuando el panel está abierto */
 body.panel-open {
    overflow: hidden;
 }
 
+/* Ajustes para evitar problemas con el teclado virtual en móviles */
 @media screen and (max-height: 450px) {
-   #users-list {
+   #users-panel {
        top: 0;
    }
 }
