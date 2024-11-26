@@ -6,122 +6,12 @@
     <title>Chat Interface</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <style>
-        .profile-container {
-            position: relative;
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .profile-container img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .profile-container i.fa-user-circle {
-            font-size: 2rem;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .message-profile-pic {
-            width: 2.5rem;
-            height: 2.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .message-profile-pic i.fa-user-circle {
-            font-size: 2.5rem;
-        }
-        .chat-container {
-            height: calc(100vh - 4rem);
-        }
-        .messages-container {
-            height: calc(100% - 4rem);
-            overflow-y: auto;
-        }
-        .messages-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        .messages-container::-webkit-scrollbar-track {
-            background: #374151;
-            border-radius: 4px;
-        }
-        .messages-container::-webkit-scrollbar-thumb {
-            background: #4B5563;
-            border-radius: 4px;
-        }
-        .messages-container::-webkit-scrollbar-thumb:hover {
-            background: #6B7280;
-        }
-
-        /* Estilos responsive */
-        @media (max-width: 768px) {
-            .chat-container {
-                flex-direction: column;
-            }
-            .users-list-desktop {
-                display: none;
-            }
-            .users-list-mobile {
-                display: block;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .users-list-mobile {
-                display: none;
-            }
-            .users-list-desktop {
-                display: block;
-            }
-        }
-
-        .input-area {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #1F2937;
-            border-top: 1px solid #374151;
-            z-index: 50;
-        }
-
-        .main-chat-area {
-            position: relative;
-            height: 100%;
-        }
-
-        /* Estilos para panel de usuarios en móvil */
-        .users-panel-mobile {
-            position: fixed;
-            top: 4rem;
-            bottom: 0;
-            right: 0;
-            width: 75%;
-            background-color: #1F2937;
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
-            z-index: 40;
-        }
-
-        .users-panel-mobile.active {
-            transform: translateX(0);
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-900 text-white h-screen">
     <!-- Pantalla de Login -->
     <div id="login-screen" class="h-screen flex items-center justify-center">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-96 mx-4">
             <h2 class="text-2xl font-bold mb-6 text-center">Ingresa al Chat</h2>
             <div class="space-y-4">
                 <input type="text" 
@@ -139,225 +29,59 @@
 
     <!-- Interface del Chat -->
     <div id="chat-interface" class="h-screen flex flex-col hidden">
-        <!-- Header -->
-        <div class="bg-gray-800 p-2 flex items-center justify-between border-b border-gray-700 h-16 fixed top-0 left-0 right-0 z-50">
-            <div class="flex items-center space-x-4">
-                <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
-                    <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
-                    <img id="profile-image" class="object-cover opacity-0">
-                </div>
-                <span class="font-bold text-lg" id="user-nickname"></span>
-            </div>
-            <button id="toggle-users-mobile" class="md:hidden p-2">
-                <i class="fas fa-users"></i>
-            </button>
-        </div>
-
-        <!-- Chat Container -->
-        <div class="flex-1 bg-gray-900 p-6 chat-container flex pt-16">
-            <!-- Main Chat Area -->
-            <div class="bg-gray-800 rounded-lg flex-1 main-chat-area mr-4 md:mr-0">
-                <div class="messages-container p-4 h-full" id="chat-area">
-                    <!-- Los mensajes se agregarán aquí dinámicamente -->
-                </div>
-                
-                <div class="input-area p-4">
-                    <div class="flex items-center">
-                        <input type="text" 
-                               placeholder="Escribe un mensaje..." 
-                               class="bg-gray-700 border-none rounded-lg py-2 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-600" 
-                               id="chat-input" />
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2" 
-                                id="send-button">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+        <!-- Header Fijo -->
+        <header class="fixed top-0 left-0 right-0 bg-gray-800 border-b border-gray-700 z-50">
+            <div class="p-2 flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div id="header-profile-pic" class="profile-container rounded-full overflow-hidden bg-gray-700">
+                        <i class="fas fa-user-circle text-gray-400" id="default-profile-icon"></i>
+                        <img id="profile-image" class="object-cover opacity-0">
                     </div>
+                    <span class="font-bold text-lg" id="user-nickname"></span>
                 </div>
+                <button id="toggle-users" class="md:hidden p-2">
+                    <i class="fas fa-users"></i>
+                </button>
             </div>
-            
-            <!-- Usuarios en escritorio -->
-            <div class="bg-gray-800 p-4 rounded-lg w-64 users-list-desktop">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold">Usuarios en línea (<span id="users-count">0</span>)</h3>
-                </div>
-                <div class="space-y-2" id="users-list-desktop">
-                    <!-- Los usuarios conectados se agregarán aquí -->
+        </header>
+
+        <!-- Container Principal -->
+        <div class="flex-1 pt-16 pb-16 h-full relative">
+            <!-- Área Principal del Chat -->
+            <div id="main-chat" class="h-full bg-gray-800 transition-transform duration-300 ease-in-out">
+                <div id="chat-area" class="h-full overflow-y-auto p-4">
+                    <!-- Los mensajes se agregarán aquí -->
                 </div>
             </div>
 
-            <!-- Panel de usuarios en móvil -->
-            <div class="users-panel-mobile" id="users-panel-mobile">
+            <!-- Panel Lateral de Usuarios (inicialmente oculto en móvil) -->
+            <div id="users-panel" class="fixed top-16 right-0 bottom-0 w-3/4 bg-gray-800 transform translate-x-full transition-transform duration-300 ease-in-out shadow-lg">
                 <div class="p-4">
-                    <h3 class="text-lg font-bold mb-4">Usuarios en línea (<span id="users-count-mobile">0</span>)</h3>
-                    <div id="users-list-mobile" class="space-y-2">
-                        <!-- Usuarios para móvil -->
+                    <h3 class="text-lg font-bold mb-4">Usuarios en línea (<span id="users-count">0</span>)</h3>
+                    <div id="users-list" class="space-y-2">
+                        <!-- Lista de usuarios -->
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Footer Fijo (Input) -->
+        <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700">
+            <div class="p-4">
+                <div class="flex items-center">
+                    <input type="text" 
+                           id="chat-input"
+                           placeholder="Escribe un mensaje..." 
+                           class="flex-1 bg-gray-700 border-none rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    <button id="send-button" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 ml-2">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </footer>
     </div>
-
-    <script>
-        let username = '';
-        let ws;
-
-        // Elementos del DOM
-        const loginScreen = document.getElementById('login-screen');
-        const chatInterface = document.getElementById('chat-interface');
-        const nicknameInput = document.getElementById('nickname-input');
-        const loginButton = document.getElementById('login-button');
-        const userNickname = document.getElementById('user-nickname');
-        const chatArea = document.getElementById('chat-area');
-        const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
-        const usersListDesktop = document.getElementById('users-list-desktop');
-        const usersListMobile = document.getElementById('users-list-mobile');
-        const usersCount = document.getElementById('users-count');
-        const usersCountMobile = document.getElementById('users-count-mobile');
-        const toggleUsersMobile = document.getElementById('toggle-users-mobile');
-        const usersPanelMobile = document.getElementById('users-panel-mobile');
-
-        let lastMessageAuthor = null;
-
-        function formatUsername(name) {
-            return `+${name}`;
-        }
-
-        function startChat(nickname) {
-            username = nickname;
-            userNickname.textContent = nickname;
-            loginScreen.classList.add('hidden');
-            chatInterface.classList.remove('hidden');
-
-            // Conectar WebSocket
-            ws = new WebSocket('https://websocket-chat-u0fd.onrender.com');
-
-            ws.onopen = () => {
-                ws.send(JSON.stringify({
-                    type: 'login',
-                    username: nickname
-                }));
-            };
-
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'userList') {
-                    updateUsersList(data.users);
-                } else if (data.type === 'message') {
-                    addMessage(data);
-                }
-            };
-
-            // Evento para toggle de usuarios en móvil
-            toggleUsersMobile.addEventListener('click', () => {
-                usersPanelMobile.classList.toggle('active');
-            });
-        }
-
-        function addMessage(message, isSelf = false) {
-            const lastMessage = chatArea.lastElementChild;
-            const author = isSelf ? username : message.username;
-
-            if (lastMessage && lastMessageAuthor === author) {
-                const lastMessageContent = lastMessage.querySelector('.message-content');
-                const newP = document.createElement('p');
-                newP.classList.add('text-gray-300', 'mt-1');
-                newP.textContent = message.text || message;
-                lastMessageContent.appendChild(newP);
-            } else {
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('hover:bg-gray-700', 'border-b', 'border-gray-700');
-                
-                messageElement.innerHTML = `
-                    <div class="p-4">
-                        <div class="flex items-start space-x-3">
-                            <div class="message-profile-pic flex-shrink-0 mt-2 rounded-full overflow-hidden">
-                                <i class="fas fa-user-circle text-gray-400"></i>
-                            </div>
-                            <div class="message-content flex flex-col">
-                                <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${formatUsername(author)}</span>
-                                <p class="text-gray-300">${message.text || message}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                chatArea.appendChild(messageElement);
-            }
-
-            lastMessageAuthor = author;
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
-
-        function updateUsersList(users) {
-            // Actualizar lista de usuarios en escritorio
-            usersListDesktop.innerHTML = '';
-            usersCount.textContent = users.length;
-            users.forEach(user => {
-                const userElement = document.createElement('div');
-                userElement.classList.add('flex', 'items-center', 'justify-between');
-                userElement.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        <span>${formatUsername(user)}</span>
-                    </div>
-                `;
-                usersListDesktop.appendChild(userElement);
-            });
-
-            // Actualizar lista de usuarios en móvil
-            usersListMobile.innerHTML = '';
-            usersCountMobile.textContent = users.length;
-            users.forEach(user => {
-                const userElement = document.createElement('div');
-                userElement.classList.add('flex', 'items-center', 'justify-between');
-                userElement.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        <span>${formatUsername(user)}</span>
-                    </div>
-                `;
-                usersListMobile.appendChild(userElement);
-            });
-        }
-
-        function sendMessage() {
-            const message = chatInput.value.trim();
-            if (message && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'message',
-                    text: message
-                }));
-                addMessage({ username, text: message }, true);
-                chatInput.value = '';
-            }
-        }
-
-        // Event Listeners
-        loginButton.addEventListener('click', () => {
-            const nickname = nicknameInput.value.trim();
-            if (nickname) {
-                startChat(nickname);
-            }
-        });
-
-        nicknameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const nickname = nicknameInput.value.trim();
-                if (nickname) {
-                    startChat(nickname);
-                }
-            }
-        });
-
-        sendButton.addEventListener('click', sendMessage);
-
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-    </script>
+    
+    <script src="index.js"></script>
 </body>
 </html>
