@@ -6,7 +6,88 @@
     <title>Chat Interface</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        .profile-container {
+            position: relative;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-container i.fa-user-circle {
+            font-size: 2rem;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .message-profile-pic {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .message-profile-pic i.fa-user-circle {
+            font-size: 2.5rem;
+        }
+
+        /* Estilos específicos para móvil */
+        @media (max-width: 768px) {
+            .desktop-users-list {
+                display: none;
+            }
+            .mobile-users-panel {
+                display: block;
+                position: fixed;
+                top: 4rem;
+                bottom: 0;
+                right: 0;
+                width: 75%;
+                background-color: #1F2937;
+                transform: translateX(100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 40;
+            }
+            .mobile-users-panel.active {
+                transform: translateX(0);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-users-panel {
+                display: none;
+            }
+            .desktop-users-list {
+                display: block;
+            }
+        }
+
+        .messages-container {
+            overflow-y: auto;
+            height: calc(100vh - 8rem);
+        }
+
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #1F2937;
+            border-top: 1px solid #374151;
+            z-index: 50;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white h-screen">
     <!-- Pantalla de Login -->
@@ -55,12 +136,20 @@
             </div>
 
             <!-- Panel Lateral de Usuarios (inicialmente oculto en móvil) -->
-            <div id="users-panel" class="fixed top-16 right-0 bottom-0 w-3/4 bg-gray-800 transform translate-x-full transition-transform duration-300 ease-in-out shadow-lg">
+            <div id="users-panel" class="mobile-users-panel fixed top-16 right-0 bottom-0 w-3/4 bg-gray-800 transform translate-x-full transition-transform duration-300 ease-in-out shadow-lg">
                 <div class="p-4">
                     <h3 class="text-lg font-bold mb-4">Usuarios en línea (<span id="users-count">0</span>)</h3>
                     <div id="users-list" class="space-y-2">
                         <!-- Lista de usuarios -->
                     </div>
+                </div>
+            </div>
+
+            <!-- Lista de Usuarios para Escritorio -->
+            <div id="desktop-users-list" class="desktop-users-list fixed top-16 right-0 bottom-0 w-64 bg-gray-800 p-4">
+                <h3 class="text-lg font-bold mb-4">Usuarios en línea (<span id="desktop-users-count">0</span>)</h3>
+                <div id="desktop-users-list-content" class="space-y-2">
+                    <!-- Lista de usuarios para escritorio -->
                 </div>
             </div>
         </div>
@@ -82,6 +171,170 @@
         </footer>
     </div>
     
-    <script src="index.js"></script>
+    <script>
+        let username = '';
+        let ws;
+
+        // Elementos del DOM
+        const loginScreen = document.getElementById('login-screen');
+        const chatInterface = document.getElementById('chat-interface');
+        const nicknameInput = document.getElementById('nickname-input');
+        const loginButton = document.getElementById('login-button');
+        const userNickname = document.getElementById('user-nickname');
+        const chatArea = document.getElementById('chat-area');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const usersPanel = document.getElementById('users-panel');
+        const toggleUsersButton = document.getElementById('toggle-users');
+        const usersListMobile = document.getElementById('users-list');
+        const usersCountMobile = document.getElementById('users-count');
+        const desktopUsersList = document.getElementById('desktop-users-list');
+        const desktopUsersListContent = document.getElementById('desktop-users-list-content');
+        const desktopUsersCount = document.getElementById('desktop-users-count');
+
+        let lastMessageAuthor = null;
+
+        function formatUsername(name) {
+            return `+${name}`;
+        }
+
+        function startChat(nickname) {
+            username = nickname;
+            userNickname.textContent = nickname;
+            loginScreen.classList.add('hidden');
+            chatInterface.classList.remove('hidden');
+
+            // Conectar WebSocket
+            ws = new WebSocket('wss://websocket-chat-u0fd.onrender.com');
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    type: 'login',
+                    username: nickname
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'userList') {
+                    updateUsersList(data.users);
+                } else if (data.type === 'message') {
+                    addMessage(data);
+                }
+            };
+
+            // Toggle usuarios en móvil
+            toggleUsersButton.addEventListener('click', () => {
+                usersPanel.classList.toggle('translate-x-full');
+            });
+        }
+
+        function addMessage(message, isSelf = false) {
+            const lastMessage = chatArea.lastElementChild;
+            const author = isSelf ? username : message.username;
+
+            if (lastMessage && lastMessageAuthor === author) {
+                const lastMessageContent = lastMessage.querySelector('.message-content');
+                const newP = document.createElement('p');
+                newP.classList.add('text-gray-300', 'mt-1');
+                newP.textContent = message.text || message;
+                lastMessageContent.appendChild(newP);
+            } else {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('hover:bg-gray-700', 'border-b', 'border-gray-700');
+                
+                messageElement.innerHTML = `
+                    <div class="p-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="message-profile-pic flex-shrink-0 mt-2 rounded-full overflow-hidden">
+                                <i class="fas fa-user-circle text-gray-400"></i>
+                            </div>
+                            <div class="message-content flex flex-col">
+                                <span class="${isSelf ? 'text-blue-400' : 'text-pink-400'} font-medium mb-1">${formatUsername(author)}</span>
+                                <p class="text-gray-300">${message.text || message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatArea.appendChild(messageElement);
+            }
+
+            lastMessageAuthor = author;
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function updateUsersList(users) {
+            // Actualizar lista de usuarios para móvil
+            usersListMobile.innerHTML = '';
+            usersCountMobile.textContent = users.length;
+            
+            // Actualizar lista de usuarios para escritorio
+            desktopUsersListContent.innerHTML = '';
+            desktopUsersCount.textContent = users.length;
+
+            users.forEach(user => {
+                // Elemento para lista móvil
+                const userElementMobile = document.createElement('div');
+                userElementMobile.classList.add('flex', 'items-center', 'justify-between');
+                userElementMobile.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span>${formatUsername(user)}</span>
+                    </div>
+                `;
+                usersListMobile.appendChild(userElementMobile);
+
+                // Elemento para lista de escritorio
+                const userElementDesktop = document.createElement('div');
+                userElementDesktop.classList.add('flex', 'items-center', 'justify-between');
+                userElementDesktop.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span>${formatUsername(user)}</span>
+                    </div>
+                `;
+                desktopUsersListContent.appendChild(userElementDesktop);
+            });
+        }
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'message',
+                    text: message
+                }));
+                addMessage({ username, text: message }, true);
+                chatInput.value = '';
+            }
+        }
+
+        // Event Listeners
+        loginButton.addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                startChat(nickname);
+            }
+        });
+
+        nicknameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const nickname = nicknameInput.value.trim();
+                if (nickname) {
+                    startChat(nickname);
+                }
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>
